@@ -13,6 +13,7 @@ end
 desc "Create dna from ruby file"
 task :create_dna  do
   dna_file = File.join(File.dirname(__FILE__), "config", "dna.rb")
+  raise "There is no confit/dna.rb file! Take care of that!" unless File.exists? dna_file
   sh "ruby #{dna_file}"
 end
 
