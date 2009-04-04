@@ -1,0 +1,6 @@
+create database IF NOT EXISTS <%= @database %>;
+
+GRANT ALL PRIVILEGES 
+ON <%= @database %>.*
+TO <%= @user %>@'localhost'
+IDENTIFIED BY '<%= @password %>';
