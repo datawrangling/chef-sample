@@ -7,41 +7,61 @@ include_recipe "nginx"
 include_recipe "memcached"
 
 node[:applications].each do |app|
-  directory "/data/apps/#{app[:name]}/shared/config//" do
-    owner node[:user]
-    group node[:user]
+  app[:user] ||= node[:user]
+  app[:group] ||= app[:user]
+  app_dir = "/data/apps/#{app[:name]}"
+  
+  directory app_dir do
+    owner app[:user]
+    group app[:group]
     mode 0755
     action :create
     recursive true
+  end
+
+  directory "#{app_dir}/shared" do
+    owner app[:user]
+    group app[:group]
+    mode 0755
+    action :create
+    recursive true
+  end
+
+  directory "#{app_dir}/shared/config/" do
+    owner app[:user]
+    group app[:group]
+    mode 0755
+    action :create
   end
   
   # Nginx Setup
   # -----------
   template "#{node[:nginx_dir]}/apps/#{app[:name]}.conf" do
-    owner node[:user]
-    group node[:user]
+    owner app[:user]
+    group app[:group]
     mode 0644
     source "app.conf.erb"
     variables(
       :app_name => app[:name],
-      :ports => app[:ports].kind_of?(String) ? app[:ports].split(/\s*,\s*/) : [app[:ports]],
+      :app_dir => app_dir,
+      :ports => [*app[:ports]],
       :http_bind_port => app[:bind_port] || 80,
       :server_names => app[:server_names]
     )
   end
   
   template "#{node[:nginx_dir]}/apps/#{app[:name]}-custom.conf" do
-    owner node[:user]
-    group node[:user]
+    owner app[:user]
+    group app[:group]
     mode 0644
     source "app.custom.erb"
   end
   
   # Memcached setup
   # ---------------
-  template "/data/apps/#{app[:name]}/shared/config/memcached.yml" do
-    owner node[:user]
-    group node[:user]
+  template "#{app_dir}/shared/config/memcached.yml" do
+    owner app[:user]
+    group app[:group]
     mode 0644
     source "memcached.yml.erb"    
     action :create
@@ -51,11 +71,11 @@ node[:applications].each do |app|
   
   # Mysql setup
   # -----------
-  db_user_attrs = {:user => node[:user], :password => node[:user_pass], :database => "#{app[:name]}_production"}
+  db_user_attrs = {:user => app[:user], :password => app[:password], :database => "#{app[:name]}_production"}
   
-  template "/data/apps/#{app[:name]}/shared/config/database.yml" do
-    owner node[:user]
-    group node[:user]
+  template "#{app_dir}/shared/config/database.yml" do
+    owner app[:user]
+    group app[:group]
     mode 0655
     source "database.yml.erb"
     variables(db_user_attrs)
@@ -74,6 +94,24 @@ node[:applications].each do |app|
   execute "create-empty-db-for-#{app}" do
     command "mysql -u root -p'#{node[:mysql_root_pass]}' < /tmp/empty-#{app[:name]}-db.sql"
   end
+  
+  # Setup a thin config file
+  execute "create-thin-config-for-#{app}" do
+    command "thin config --config /data/apps/#{app[:name]}/shared/config/thin.yml \
+                         --chdir /data/apps/#{app[:name]}/current \
+                         --environment production \
+                         --log /data/apps/#{app[:name]}/shared/log/thin.log \
+                         --pid /data/apps/#{app[:name]}/shared/pids/thin.pid \
+                         --user #{app[:user]} \
+                         --group #{app[:group]} \
+                         --port #{[*app[:ports]].first} \
+                         --servers #{[*app[:ports]].size}".squeeze(" ")
+  end
+  
+  execute "startup-#{app}" do
+    command "thin start --config /data/apps/#{app[:name]}/shared/config/thin.yml"
+  end
+  
 end if node[:applications]
 
 service "nginx" do

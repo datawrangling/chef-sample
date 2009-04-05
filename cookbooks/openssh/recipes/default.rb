@@ -43,6 +43,6 @@ service "ssh" do
     service_name "ssh"
   end
   supports :restart => true
-  action [ :enable, :start ]
+  action [ :enable, :restart ]
 end
 

@@ -1,5 +1,4 @@
 upstream <%= @app_name %> {
-  # This should TOTALLY work
   <% for port in @ports %>
    server 127.0.0.1:<%= port %>;
   <% end %>
@@ -14,7 +13,7 @@ server {
   server_name _;
   <% end %>
 
-  root /data/<%= @app_name %>/current/public;
+  root <%= @app_dir %>/current/public;
   
   access_log <%= @node[:nginx_log_dir] %>/<%= @app_name %>.access.log main;
   error_log <%= @node[:nginx_log_dir] %>/<%= @app_name %>.error.log notice;
@@ -37,6 +36,6 @@ server {
   }
   
   location = /500.html {
-    root /data/<%= @app_name %>/current/public;
+    root <%= @app_dir %>/current/public;
   }
 }

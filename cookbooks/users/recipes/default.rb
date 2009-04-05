@@ -44,5 +44,5 @@ node[:users].each do |user_obj|
     source "authorized_keys.erb"
     
     variables :user => user_obj
-  end if user_obj[:public_key]
+  end if user_obj[:authorized_keys]
 end
