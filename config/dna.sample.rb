@@ -9,33 +9,47 @@ dna = {
     {
       :username => "mr_you",
       :password => "REPLACE_ME!",
-      :authorized_keys => "ssh-rsa A+CfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= Corey@system-refresh.local",
+      :authorized_keys => "ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= bob@bob.com",
+      :shell => "/bin/zsh",
       :gid => 1000,
       :uid => 1000,
-      :sudo => true
+      :sudo => true,
+      :custom_files  => [{
+        :name => ".zshrc",
+        :content => File.read(File.dirname(__FILE__), "../config/custom/zshrc")
+      }]
     },
+    
     {
       :username => "mr_app",
-      :password => "REPLACE_ME!",
-      :authorized_keys => ["ssh-rsa AA+CfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= Corey@system-refresh.local", "ssh-rsa AyoHWDURPJFDk8dfjDKFjd8ds8+/XHUZ= jon@moo.com"],
-      :gid => 1001,
-      :uid => 1001,
-      :sudo => true
-    },
+      :gid => 1101,
+      :uid => 1101,
+      :authorized_keys => ["ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= bob@bob.com", "ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= cindy@bob.com"],
+      :shell => "/bin/zsh",
+    }
+  ],
+  
+  :packages => [
+    "imagemagick",
+    "zsh",
+    "zsh-doc",
+    "vim"
   ],
   
   :applications => [
     {
       :name => "sample",
-      :ports => [3000, 3001],
-      :user => "mr_app",
-      :group => "mr_app",
+      :server_names => "_",
+      :ports => [4000, 4001],
+      :user => "mr_you",
+      :group => "mr_you"
+      #:custom_nginx_conf => File.read(File.dirname(__FILE__), "../config/custom/some-custom-nginx.conf")
     }
   ],
   
   :gems => [
     "rake", 
-    {:name => "mysql", :version => "2.7"}, # Rails craves this
+    {:name => "mysql", :version => "2.7"},
     "thin"
   ],
   
@@ -45,19 +59,21 @@ dna = {
   ],
   
   :cronjobs => [
-    {:name => "pointless",
+    {:name => "a_dumb_task",
      :minute => 30,
-     :hour => 4,
+     :hour => nil,
      :day => nil,
      :month => nil,
      :weekday => nil,
-     :user => "root",
-     :command => "date > /data/wow_a_cron_example.txt"
+     :user => "mr_app",
+     :command => "date >> /data/look_cron_works.txt"
     }
   ],
   
   :recipes => [
+    "packages",
     "users",
+    "sudo",
     "openssh",
     "ec2-ebs",
     "mysql",

@@ -8,7 +8,7 @@ server {
   listen <%= @http_bind_port %>;
 
   <% if @server_names %>
-  <%= "server_name #{@server_names.join(" ")};" %>
+  <%= "server_name #{[*@server_names].join(" ")};" %>
   <% else %>
   server_name _;
   <% end %>
@@ -20,7 +20,15 @@ server {
 
   include <%= @node[:nginx_dir] %>/common/app.conf;
 
-  include <%= @node[:nginx_dir] %>/apps/<%= @app_name %>-custom.conf;
+  # ---------------------
+  # Custom App Conf Begin
+  # ---------------------
+
+<%= @custom_conf %>
+
+  # ---------------------
+  # Custom App Conf End
+  # ---------------------
 
   location / {
     # auth is disabled for this server

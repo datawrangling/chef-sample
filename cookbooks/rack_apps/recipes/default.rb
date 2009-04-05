@@ -46,15 +46,9 @@ node[:applications].each do |app|
       :app_dir => app_dir,
       :ports => [*app[:ports]],
       :http_bind_port => app[:bind_port] || 80,
-      :server_names => app[:server_names]
+      :server_names => app[:server_names],
+      :custom_conf => app[:custom_nginx_conf]
     )
-  end
-  
-  template "#{node[:nginx_dir]}/apps/#{app[:name]}-custom.conf" do
-    owner app[:user]
-    group app[:group]
-    mode 0644
-    source "app.custom.erb"
   end
   
   # Memcached setup
@@ -91,12 +85,12 @@ node[:applications].each do |app|
     variables(db_user_attrs)
   end
   
-  execute "create-empty-db-for-#{app}" do
+  execute "create-empty-db-for-#{app[:name]}" do
     command "mysql -u root -p'#{node[:mysql_root_pass]}' < /tmp/empty-#{app[:name]}-db.sql"
   end
   
   # Setup a thin config file
-  execute "create-thin-config-for-#{app}" do
+  execute "create-thin-config-for-#{app[:name]}" do
     command "thin config --config #{app_dir}/shared/config/thin.yml \
                          --chdir /data/apps/#{app[:name]}/current \
                          --environment production \
@@ -108,7 +102,7 @@ node[:applications].each do |app|
                          --servers #{[*app[:ports]].size}".squeeze(" ")
   end
   
-  execute "startup-#{app}" do
+  execute "startup-#{app[:name]}" do
     command "thin start --config #{app_dir}/shared/config/thin.yml"
     only_if "[[ -f #{app_dir}/shared/config/thin.yml ]]"
   end

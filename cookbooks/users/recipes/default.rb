@@ -3,46 +3,56 @@
 # Recipe:: default
 #
 
-node[:users].each do |user_obj|
-  group user_obj[:username] do
-    gid user_obj[:gid]
+node[:users].each do |user|
+  group user[:username] do
+    gid user[:gid]
   end
   
-  user user_obj[:username] do
+  user user[:username] do
     action :create
-    
-    uid user_obj[:uid]
-    gid user_obj[:gid]
-    shell "/bin/bash"
+    password user[:password].crypt(user[:username]) if user[:password]
+    uid user[:uid]
+    gid user[:gid]
+    shell user[:shell] || "/bin/bash"
   end
 
-  directory "/data/home/#{user_obj[:username]}" do
-    owner user_obj[:uid]
-    group user_obj[:gid]
+  directory "/data/home/#{user[:username]}" do
+    owner user[:uid]
+    group user[:gid]
     mode 0755
     recursive true
   end
   
-  link "/home/#{user_obj[:username]}" do
-    to "/data/home/#{user_obj[:username]}"
+  link "/home/#{user[:username]}" do
+    to "/data/home/#{user[:username]}"
   end
   
   execute "chown homedir to user" do
-    command "chown -R #{user_obj[:username]}:#{user_obj[:username]} /data/home/#{user_obj[:username]}"
+    command "chown -R #{user[:username]}:#{user[:username]} /data/home/#{user[:username]}"
   end
   
-  directory "/data/home/#{user_obj[:username]}/.ssh" do
-    owner user_obj[:uid]
-    group user_obj[:gid]
+  directory "/data/home/#{user[:username]}/.ssh" do
+    owner user[:uid]
+    group user[:gid]
     mode 0700
   end
   
-  template "/data/home/#{user_obj[:username]}/.ssh/authorized_keys" do
-    owner user_obj[:uid]
-    group user_obj[:gid]
+  for custom_file in user[:custom_files] || []
+    template (custom_file[:path] || "/data/home/#{user[:username]}/#{custom_file[:name]}") do
+      owner user[:uid]
+      group user[:gid]
+      mode custom_file[:mode] || 0744
+      variables :content => custom_file[:content]  
+      source "custom.erb"
+    end
+  end
+  
+  template "/data/home/#{user[:username]}/.ssh/authorized_keys" do
+    owner user[:uid]
+    group user[:gid]
     mode 0600
     source "authorized_keys.erb"
     
-    variables :user => user_obj
-  end if user_obj[:authorized_keys]
+    variables :user => user
+  end if user[:authorized_keys]
 end
