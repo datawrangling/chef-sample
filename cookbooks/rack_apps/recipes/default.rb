@@ -97,11 +97,11 @@ node[:applications].each do |app|
   
   # Setup a thin config file
   execute "create-thin-config-for-#{app}" do
-    command "thin config --config /data/apps/#{app[:name]}/shared/config/thin.yml \
+    command "thin config --config #{app_dir}/shared/config/thin.yml \
                          --chdir /data/apps/#{app[:name]}/current \
                          --environment production \
-                         --log /data/apps/#{app[:name]}/shared/log/thin.log \
-                         --pid /data/apps/#{app[:name]}/shared/pids/thin.pid \
+                         --log #{app_dir}/shared/log/thin.log \
+                         --pid #{app_dir}/shared/pids/thin.pid \
                          --user #{app[:user]} \
                          --group #{app[:group]} \
                          --port #{[*app[:ports]].first} \
@@ -109,7 +109,8 @@ node[:applications].each do |app|
   end
   
   execute "startup-#{app}" do
-    command "thin start --config /data/apps/#{app[:name]}/shared/config/thin.yml"
+    command "thin start --config #{app_dir}/shared/config/thin.yml"
+    only_if "[[ -f #{app_dir}/shared/config/thin.yml ]]"
   end
   
 end if node[:applications]
