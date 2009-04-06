@@ -9,11 +9,11 @@ node[:users].each do |user|
   end
   
   user user[:username] do
-    action :create
     password user[:password].crypt(user[:username]) if user[:password]
     uid user[:uid]
     gid user[:gid]
     shell user[:shell] || "/bin/bash"
+    action :create
   end
 
   directory "/data/home/#{user[:username]}" do

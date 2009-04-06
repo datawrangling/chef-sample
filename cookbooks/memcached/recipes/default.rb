@@ -12,3 +12,8 @@ template "/etc/memcached.conf" do
   source "memcached.conf.erb"
   action :create
 end
+
+service "memcached" do
+  supports :start => true, :stop => true, :restart => true
+  action [ :enable, :start ]
+end
