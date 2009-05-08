@@ -10,14 +10,10 @@ dna = {
       :username => "mr_you",
       :password => "REPLACE_ME!",
       :authorized_keys => "ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= bob@bob.com",
-      :shell => "/bin/zsh",
+      :shell => "/bin/bash",
       :gid => 1000,
       :uid => 1000,
       :sudo => true,
-      :custom_files  => [{
-        :name => ".zshrc",
-        :content => File.read(File.dirname(__FILE__), "../config/custom/zshrc")
-      }]
     },
     
     {
@@ -25,14 +21,12 @@ dna = {
       :gid => 1101,
       :uid => 1101,
       :authorized_keys => ["ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= bob@bob.com", "ssh-rsa ACfSXuMTJvY6Ys6zdxRljhzBbh/XHU8= cindy@bob.com"],
-      :shell => "/bin/zsh",
+      :shell => "/bin/bash",
     }
   ],
   
   :packages => [
     "imagemagick",
-    "zsh",
-    "zsh-doc",
     "vim"
   ],
   
@@ -49,6 +43,7 @@ dna = {
   
   :gems => [
     "rake", 
+    "rack",
     {:name => "mysql", :version => "2.7"},
     "thin"
   ],
